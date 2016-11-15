@@ -10,7 +10,10 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 
+import jenkins.branch.MultiBranchProject;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import hudson.Extension;
@@ -28,6 +31,7 @@ import hudson.plugins.jira.RunScmChangeExtractor;
 import hudson.plugins.jira.listissuesparameter.JiraIssueParameterValue;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.ChangeLogSet.Entry;
+import sun.jvm.hotspot.oops.MultiBranchData;
 
 public class DefaultIssueSelector extends AbstractIssueSelector {
 
@@ -152,6 +156,22 @@ public class DefaultIssueSelector extends AbstractIssueSelector {
                     if (issueIds.add(issueId)) {
                         getLogger().finer("Added perforce issue " + issueId + " from build " + build);
                     }
+                }
+            }
+        }
+    }
+
+    protected void addIssuesFromBranchName(Run<?, ?> build, JiraSite site, TaskListener listener,
+                                           Set<String> issueIds) {
+        if (build instanceof WorkflowRun) {
+            WorkflowRun run = (WorkflowRun)build;
+            WorkflowJob possibleBranch = run.getParent();
+            if (possibleBranch.getParent() instanceof MultiBranchProject) {
+                Pattern pattern = site.getIssuePattern();
+                Matcher m = pattern.matcher(possibleBranch.getName());
+                if (m.groupCount() >= 1) {
+                    String content = StringUtils.upperCase(m.group(1));
+                    issueIds.add(content);
                 }
             }
         }
