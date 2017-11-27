@@ -5,6 +5,7 @@ import com.atlassian.jira.rest.client.api.domain.IssueType;
 import com.atlassian.jira.rest.client.api.domain.Priority;
 import com.atlassian.jira.rest.client.api.domain.Status;
 import com.google.common.base.Splitter;
+import com.google.common.io.Files;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
@@ -18,18 +19,25 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
+import hudson.util.IOUtils;
 import hudson.util.ListBoxModel;
 import net.sf.json.JSONObject;
+import org.apache.commons.codec.Charsets;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
 import static hudson.plugins.jira.JiraRestService.BUG_ISSUE_TYPE_ID;
@@ -180,7 +188,7 @@ public class JiraCreateIssueNotifier extends Notifier {
         String buildName = getBuildName(vars);
         String summary = String.format("Build %s failed", buildName);
         String description = String.format(
-                "%s\n\nThe build %s has failed.\nFirst failed run: %s",
+                "%s%n%nThe build %s has failed.%nFirst failed run: %s",
                 (this.testDescription.equals("")) ? "No description is provided" : this.testDescription,
                 buildName,
                 getBuildDetailsString(vars)
@@ -242,25 +250,7 @@ public class JiraCreateIssueNotifier extends Notifier {
      * @throws InterruptedException
      */
     private String getIssue(String filename) throws IOException, InterruptedException {
-
-        String issueId = "";
-        BufferedReader br = null;
-        try {
-            String issue;
-            br = new BufferedReader(new FileReader(filename));
-
-            while ((issue = br.readLine()) != null) {
-                issueId = issue;
-            }
-            return issueId;
-        } catch (FileNotFoundException e) {
-            return null;
-        } finally {
-            if (br != null) {
-                br.close();
-            }
-        }
-
+        return Files.readFirstLine(new File(filename), StandardCharsets.UTF_8);
     }
 
     JiraSite getSiteForProject(AbstractProject<?, ?> project) {
@@ -303,14 +293,12 @@ public class JiraCreateIssueNotifier extends Notifier {
     /**
      * write's the issue id in the file, which is stored in the Job's directory
      *
-     * @param Filename
+     * @param fileName
      * @param issue
-     * @throws FileNotFoundException
+     * @throws IOException
      */
-    private void writeInFile(String Filename, Issue issue) throws FileNotFoundException {
-        PrintWriter writer = new PrintWriter(Filename);
-        writer.println(issue.getKey());
-        writer.close();
+    private void writeInFile(String fileName, Issue issue) throws IOException {
+        Files.write(issue.getKey() + "\n", new File(fileName), StandardCharsets.UTF_8);
     }
 
     /**
@@ -322,7 +310,7 @@ public class JiraCreateIssueNotifier extends Notifier {
                                            String filename, EnvVars vars) throws InterruptedException, IOException {
 
         if (previousBuildResult == Result.FAILURE) {
-            String comment = String.format("Build is still failing.\nFailed run: %s", getBuildDetailsString(vars));
+            String comment = String.format("Build is still failing.%nFailed run: %s", getBuildDetailsString(vars));
 
             //Get the issue-id which was filed when the previous built failed
             String issueId = getIssue(filename);
@@ -378,7 +366,7 @@ public class JiraCreateIssueNotifier extends Notifier {
                                            String filename, EnvVars vars) throws InterruptedException, IOException {
 
         if (previousBuildResult == Result.FAILURE || previousBuildResult == Result.SUCCESS) {
-            String comment = String.format("Previously failing build now is OK.\n Passed run: %s", getBuildDetailsString(vars));
+            String comment = String.format("Previously failing build now is OK.%n Passed run: %s", getBuildDetailsString(vars));
             String issueId = getIssue(filename);
 
             //if issue exists it will check the status and comment or delete the file accordingly

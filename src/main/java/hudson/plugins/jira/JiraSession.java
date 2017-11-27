@@ -157,9 +157,6 @@ public class JiraSession {
     public Version getVersionByName(String projectKey, String name) {
         LOGGER.fine("Fetching versions from project: " + projectKey);
         List<Version> versions = getVersions(projectKey);
-        if (versions == null) {
-            return null;
-        }
         for (Version version : versions) {
             if (version.getName().equals(name)) {
                 return version;
@@ -393,21 +390,6 @@ public class JiraSession {
             }
         }
         return knownStatuses;
-    }
-
-    /**
-     * Returns issue-id of the created issue
-     *
-     * @param projectKey
-     * @param description
-     * @param assignee
-     * @param components
-     * @param summary
-     * @return The issue id
-     */
-    @Deprecated
-    public Issue createIssue(String projectKey, String description, String assignee, Iterable<String> components, String summary) {
-        return createIssue(projectKey, description, assignee, components, summary, null, null);
     }
 
     public Issue createIssue(String projectKey, String description, String assignee, Iterable<String> components, String summary, @Nonnull Long issueTypeId, @Nullable Long priorityId) {

@@ -2,6 +2,7 @@ package hudson.plugins.jira.versionparameter;
 
 import com.atlassian.jira.rest.client.api.domain.Version;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 import org.apache.maven.artifact.versioning.ComparableVersion;
@@ -17,7 +18,7 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
  * 1.1.1.2
  * 1.1.1.1
  */
-public class VersionComparator implements Comparator<Version> {
+public class VersionComparator implements Comparator<Version>, Serializable {
 
     public int compare(Version rev1, Version rev2) {
         ComparableVersion comparableVersion1 = new ComparableVersion(getNumberVersion(rev1.getName()));

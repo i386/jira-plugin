@@ -526,10 +526,6 @@ public class JiraSite extends AbstractDescribableImpl<JiraSite> {
 
         List<Version> versions = session.getVersions(projectKey);
 
-        if (versions == null) {
-            return Collections.emptySet();
-        }
-
         Set<JiraVersion> versionsSet = new HashSet<JiraVersion>(versions.size());
 
         for (Version version : versions) {
@@ -597,14 +593,15 @@ public class JiraSite extends AbstractDescribableImpl<JiraSite> {
         }
 
         StringBuilder sb = new StringBuilder();
-        for (String type : releaseNotes.keySet()) {
-            sb.append(String.format("# %s\n", type));
-            for (String issue : releaseNotes.get(type)) {
+        for (Map.Entry<String, Set<String>> entry : releaseNotes.entrySet()) {
+            String type = entry.getKey();
+            Set<String> issuesForType = entry.getValue();
+            sb.append(String.format("# %s%n", type));
+            for (String issue : issuesForType) {
                 sb.append(issue);
                 sb.append("\n");
             }
         }
-
         return sb.toString();
     }
 

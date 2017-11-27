@@ -1,8 +1,11 @@
 package hudson.plugins.jira.model;
 
-import java.lang.String;
+import com.google.common.base.Objects;
+import com.google.common.collect.ComparisonChain;
 
-public class JiraIssueField implements Comparable<JiraIssueField> {
+import javax.annotation.Nonnull;
+
+public final class JiraIssueField implements Comparable<JiraIssueField> {
 
     private final String fieldId;
     private final Object fieldValue;
@@ -12,49 +15,25 @@ public class JiraIssueField implements Comparable<JiraIssueField> {
         this.fieldValue = fieldValue;
     }
 
-    public int compareTo(JiraIssueField that) {
-        return this.compareTo(that);
+    @Override
+    public int compareTo(@Nonnull JiraIssueField o) {
+        return ComparisonChain.start()
+                .compare(this.fieldId, o.fieldId)
+                .result();
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((fieldId == null) ? 0 : fieldId.hashCode());
-        result = prime * result + ((fieldValue == null) ? 0 : fieldValue.hashCode());
-        return result;
+        return Objects.hashCode(fieldId, fieldValue);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-
-        JiraIssueField other = (JiraIssueField) obj;
-        if (fieldId == null) {
-            if (other.fieldId != null) {
-                return false;
-            }
-        } else if (!fieldId.equals(other.fieldId)) {
-            return false;
-        }
-
-        if (fieldValue == null) {
-            if (other.fieldValue != null) {
-                return false;
-            }
-        } else if (!fieldValue.equals(other.fieldValue)) {
-            return false;
-        }
-
-        return true;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        JiraIssueField that = (JiraIssueField) o;
+        return Objects.equal(fieldId, that.fieldId) &&
+                Objects.equal(fieldValue, that.fieldValue);
     }
 
     public String getId() {

@@ -238,7 +238,7 @@ class Updater {
                         "%6$s: Integrated in Jenkins build %2$s (See [%4$s])\n%5$s",
                 jenkinsRootUrl,
                 build,
-                result != null ? result.color.getImage() : null,
+                result.color.getImage(),
                 Util.encode(jenkinsRootUrl + build.getUrl()),
                 getScmComments(wikiStyle, build, recordScmChanges, jiraIssue),
                 result.toString());
@@ -246,7 +246,6 @@ class Updater {
 
     private String getScmComments(boolean wikiStyle, Run<?, ?> run, boolean recordScmChanges, JiraIssue jiraIssue) {
         StringBuilder comment = new StringBuilder();
-        RepositoryBrowser repoBrowser = getRepositoryBrowser(run);
         for (ChangeLogSet<? extends Entry> set : RunScmChangeExtractor.getChanges(run)) {
             for (Entry change : set) {
                 if (jiraIssue != null && !StringUtils.containsIgnoreCase(change.getMsg(), jiraIssue.getKey())) {
@@ -374,20 +373,7 @@ class Updater {
         if (commitId != null) {
             return commitId;
         }
-
-        // fall back to old SVN-specific solution, if we have only installed an old subversion-plugin
-        // which doesn't implement getCommitId, yet
-        try {
-            Class<?> clazz = entry.getClass();
-            Method method = clazz.getMethod("getRevision", (Class[]) null);
-            if (method == null) {
-                return null;
-            }
-            Object revObj = method.invoke(entry, (Object[]) null);
-            return (revObj != null) ? revObj.toString() : null;
-        } catch (Exception e) {
-            return null;
-        }
+        return null;
     }
 
     private SCM getScm() {
